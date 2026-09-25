@@ -1,3 +1,4 @@
+import BN from "bn.js";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { RPC_URL } from "./env";
 
@@ -52,4 +53,13 @@ export async function fetchCoinMetas(mints: string[]): Promise<Record<string, Co
     };
   }
   return out;
+}
+
+// Parse a decimal string like "0.05" into base units without floating-point rounding.
+export function toUnits(input: string, decimals: number): BN | null {
+  const m = input.trim().match(/^(\d*)(?:\.(\d*))?$/);
+  if (!m || (!m[1] && !m[2])) return null;
+  const frac = (m[2] ?? "").slice(0, decimals).padEnd(decimals, "0");
+  const n = new BN((m[1] || "0") + frac);
+  return n.isZero() ? null : n;
 }

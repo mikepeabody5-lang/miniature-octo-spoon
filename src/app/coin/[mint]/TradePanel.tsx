@@ -12,7 +12,7 @@ import {
   SwapMode,
   TokenDecimal,
 } from "@meteora-ag/dynamic-bonding-curve-sdk";
-import { fmt, tokenBalance, TOKEN_DECIMALS } from "@/lib/coin";
+import { fmt, toUnits, tokenBalance, TOKEN_DECIMALS } from "@/lib/coin";
 import { explorer } from "@/lib/env";
 import type { PoolState } from "./CoinView";
 
@@ -51,10 +51,7 @@ export function TradePanel({ state, symbol, onTraded }: { state: PoolState; symb
     tokenBalance(connection, wallet.publicKey, pool.poolState.baseMint).then(setHeld);
   }, [connection, wallet.publicKey, pool, lastSig]);
 
-  const amountIn = useMemo(() => {
-    const n = Number(amount);
-    return n > 0 ? new BN(Math.floor(n * 10 ** inDecimals).toString()) : null;
-  }, [amount, inDecimals]);
+  const amountIn = useMemo(() => toUnits(amount, inDecimals), [amount, inDecimals]);
 
   const quote = useMemo(() => {
     if (!amountIn || !currentPoint) return null;

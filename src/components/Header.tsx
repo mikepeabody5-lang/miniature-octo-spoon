@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { IS_MAINNET } from "@/lib/env";
 
 const WalletMultiButton = dynamic(
   () => import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
@@ -18,7 +19,9 @@ export function Header() {
           <Link href="/launch" className="hover:text-accent">Launch</Link>
           <Link href="/admin" className="hover:text-accent">Admin</Link>
         </nav>
-        <span className="ml-auto border border-ink px-2 py-1 font-mono text-xs uppercase">Solana devnet</span>
+        <span className={`ml-auto border px-2 py-1 font-mono text-xs uppercase ${IS_MAINNET ? "border-accent text-accent" : "border-ink"}`}>
+          {IS_MAINNET ? "Solana mainnet" : "Solana devnet"}
+        </span>
         <WalletMultiButton />
       </div>
     </header>

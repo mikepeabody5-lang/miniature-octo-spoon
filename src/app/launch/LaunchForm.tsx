@@ -8,6 +8,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { DynamicBondingCurveClient, type PoolConfig } from "@meteora-ag/dynamic-bonding-curve-sdk";
 import { DBC_CONFIG, explorer } from "@/lib/env";
+import { toUnits } from "@/lib/coin";
 
 const SLIPPAGE_BPS = 100; // 1% on the first buy
 const TOKEN_DECIMALS = 6;
@@ -35,7 +36,7 @@ export function LaunchForm() {
   }, [client]);
 
   const buySol = Number(firstBuy) || 0;
-  const buyLamports = new BN(Math.round(buySol * LAMPORTS_PER_SOL));
+  const buyLamports = toUnits(firstBuy, 9) ?? new BN(0);
 
   // Quote the first buy against a fresh curve, before the pool exists.
   const quote = useMemo(() => {
@@ -61,6 +62,8 @@ export function LaunchForm() {
     if (!wallet.publicKey || !wallet.sendTransaction) return setVisible(true);
     setError(null);
     try {
+      // Never send a first buy without slippage protection.
+      if (buySol > 0 && !quote?.minimumAmountOut) throw new Error("Couldn't quote the first buy. Try again in a moment.");
       setStep("uploading");
       const body = new FormData();
       body.append("image", image!);
@@ -88,7 +91,7 @@ export function LaunchForm() {
             ? {
                 buyer: wallet.publicKey,
                 buyAmount: buyLamports,
-                minimumAmountOut: quote?.minimumAmountOut ?? new BN(0),
+                minimumAmountOut: quote!.minimumAmountOut!,
                 referralTokenAccount: null,
               }
             : undefined,
@@ -141,7 +144,7 @@ export function LaunchForm() {
         </label>
         <label className="block space-y-1">
           <span className="text-sm font-semibold">Image</span>
-          <input className={field} type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] ?? null)} required />
+          <input className={field} type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(e) => setImage(e.target.files?.[0] ?? null)} required />
         </label>
         <label className="block space-y-1">
           <span className="text-sm font-semibold">First buy (SOL, optional)</span>
